@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "OfficeRunner",
+    "slug": "office-runner-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "entryPoint": "./App.js",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "android": {
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "INTERNET"
+      ],
+      "package": "com.dbx.runner",
+      "versionCode": 1
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "dist"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b16ee72c-a326-4ecb-9a79-31d2c3ab5e3b"
+      }
+    }
+  }
+}
