@@ -1,32 +1,34 @@
 {
   "expo": {
-    "name": "OfficeRunner",
-    "slug": "office-runner-mobile",
+    "name": "DBX Runner",
+    "slug": "dbx-runner",
     "version": "1.0.0",
     "orientation": "portrait",
-    "entryPoint": "./App.js",
-    "platforms": [
-      "ios",
-      "android",
-      "web"
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#003366"
+    },
+    "assetBundlePatterns": [
+      "**/*"
     ],
+    "ios": {
+      "supportsTablet": true
+    },
     "android": {
-      "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "CAMERA",
-        "INTERNET"
-      ],
-      "package": "com.dbx.runner",
-      "versionCode": 1
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#003366"
+      },
+      "package": "com.vmathur.dbxrunner"
     },
     "web": {
-      "bundler": "metro",
-      "output": "dist"
+      "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
-        "projectId": "b16ee72c-a326-4ecb-9a79-31d2c3ab5e3b"
+        "projectId": "93c95ab7-daed-4b33-af37-33a40fb89b0e"
       }
     }
   }

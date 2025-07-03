@@ -1,120 +1,142 @@
 // LoginScreen.js
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  StyleSheet,
-  Image,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import { BASE_URL } from '../config';
+import { Picker } from '@react-native-picker/picker';
+import BASE_URL from '../config';
+import { Image } from 'react-native';
 
-export default function LoginScreen({ navigation }) {
+const LoginScreen = ({ navigation }) => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('runner');
-  const [loading, setLoading] = useState(false);
+  const [role, setRole] = useState('runner'); // default selection
 
   const handleLogin = async () => {
     if (!phone || !password) {
-      Alert.alert('Missing Info', 'Please enter phone and password.');
+      Alert.alert('Error', 'Please enter phone and password');
       return;
     }
 
     try {
-      setLoading(true);
-      console.log('🔐 Trying to login with:', phone, password);
+      const response = await fetch(`${BASE_URL}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password }),
+      });
 
-      const res = await axios.post(`${BASE_URL}/api/login`, { phone, password });
-      const user = res.data;
+      const data = await response.json();
 
-      if (!user || !user.role) {
-        Alert.alert('Login Failed', 'Invalid credentials or server error.');
-        return;
-      }
+      if (response.ok) {
+        if (data.user.role !== role) {
+          Alert.alert('Role Mismatch', `You are not registered as ${role}`);
+          return;
+        }
 
-      if (user.role !== role) {
-        Alert.alert('Role Mismatch', `You are registered as "${user.role}", but selected "${role}".`);
-        return;
-      }
+        await AsyncStorage.setItem('user', JSON.stringify(data.user));
 
-      await AsyncStorage.setItem('user', JSON.stringify(user));
-
-      if (user.role === 'runner') {
-        navigation.navigate('RunnerDashboard', { user });
-      } else if (user.role === 'manager') {
-        navigation.navigate('ManagerDashboard', { user });
-      } else if (user.role === 'admin') {
-        navigation.navigate('AdminDashboard', { user });
+        if (role === 'runner') navigation.navigate('RunnerDashboard', { user: data.user });
+else if (role === 'manager') navigation.navigate('ManagerDashboard', { user: data.user });
+else if (role === 'admin') navigation.navigate('AdminDashboard', { user: data.user });
       } else {
-        Alert.alert('Login Failed', 'Unrecognized role.');
+        Alert.alert('Login Failed', data.message || 'Invalid credentials');
       }
-    } catch (err) {
-      console.error('❌ Login error:', err?.response?.data || err.message);
-      Alert.alert('Login Failed', 'Server error or network issue.');
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Login error:', error);
+      Alert.alert('Error', 'Unable to connect to server');
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <Image source={require('../Logo.png')} style={styles.logo} />
-        <Text style={styles.welcome}>Welcome</Text>
-        <Text style={styles.subtitle}>
-          Deep Blue <Text style={{ color: 'orange' }}>Xpress</Text> - Office Runner
-        </Text>
+  <View style={styles.container}>
+    <View style={{ alignItems: 'center', marginBottom: 20 }}>
+      <Image
+        source={require('../assets/Logo.png')}
+        style={{ width: 240, height: 240, resizeMode: 'contain' }}
+      />
+      <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#fff', marginTop: 10 }}>
+        DBX Runner
+      </Text>
+    </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Phone"
-          keyboardType="phone-pad"
-          value={phone}
-          onChangeText={setPhone}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+    <Picker
+      selectedValue={role}
+      onValueChange={(itemValue) => setRole(itemValue)}
+      style={styles.picker}
+    >
+      <Picker.Item label="Runner" value="runner" />
+      <Picker.Item label="Manager" value="manager" />
+      <Picker.Item label="Admin" value="admin" />
+    </Picker>
 
-        <Picker
-          selectedValue={role}
-          style={styles.picker}
-          onValueChange={(itemValue) => setRole(itemValue)}
-        >
-          <Picker.Item label="Login as Runner" value="runner" />
-          <Picker.Item label="Login as Manager" value="manager" />
-          <Picker.Item label="Login as Admin" value="admin" />
-        </Picker>
+      <TextInput
+        style={styles.input}
+        placeholder="Phone"
+        keyboardType="numeric"
+        value={phone}
+        onChangeText={setPhone}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+      />
 
-        <Button
-          title={loading ? 'Logging in...' : 'LOGIN'}
-          onPress={handleLogin}
-          color="#007bff"
-          disabled={loading}
-        />
-        {loading && <ActivityIndicator style={{ marginTop: 15 }} />}
-      </View>
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <Text style={styles.buttonText}>Login</Text>
+      </TouchableOpacity>
     </View>
   );
-}
+};
+
+export default LoginScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1e3c72', padding: 20 },
-  card: { backgroundColor: 'white', padding: 30, borderRadius: 10, width: '100%', maxWidth: 400, alignItems: 'center' },
-  logo: { width: 140, height: 140, resizeMode: 'contain', marginBottom: 10 },
-  welcome: { fontSize: 26, fontWeight: 'bold', color: '#003366' },
-  subtitle: { fontSize: 16, marginBottom: 20, textAlign: 'center' },
-  input: { width: '100%', borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 12, borderRadius: 5 },
-  picker: { width: '100%', marginBottom: 20, color: '#333', backgroundColor: '#f2f2f2', borderRadius: 5 },
+  container: {
+    flex: 1,
+    backgroundColor: '#001F54',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 30,
+  },
+  logo: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FFA500',
+    marginBottom: 30,
+  },
+  input: {
+    backgroundColor: '#fff',
+    width: '100%',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  
+  button: {
+    backgroundColor: '#FFA500',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    width: '100%',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#001F54',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 18,
+  },
+picker: {
+  backgroundColor: '#fff',
+  borderRadius: 10,
+  width: '100%',
+  height: 50, // 👈 Increase height for better touchability
+  justifyContent: 'center',
+  marginBottom: 15,
+  paddingHorizontal: 10,
+},
 });

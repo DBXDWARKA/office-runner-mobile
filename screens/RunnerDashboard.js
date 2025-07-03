@@ -1,5 +1,4 @@
-// RunnerDashboard.js
-import React, { useEffect, useState } from 'react';
+""import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -20,7 +19,6 @@ export default function RunnerDashboard({ navigation }) {
   const [trip, setTrip] = useState(null);
   const [managers, setManagers] = useState([]);
   const [selectedManagerId, setSelectedManagerId] = useState('');
-  const [distance, setDistance] = useState('');
   const [parking, setParking] = useState('');
   const [summary, setSummary] = useState({});
   const [tpfa, setTpfa] = useState([]);
@@ -102,14 +100,29 @@ export default function RunnerDashboard({ navigation }) {
     );
   };
 
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) *
+      Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
   const stopTrip = async () => {
     if (!trip?._id) return;
     Geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
+          const distance = calculateDistance(trip.startLat, trip.startLng, latitude, longitude);
           const res = await axios.post(`${BASE_URL}/api/trip/stop/${trip._id}`, {
-            distance: parseFloat(distance),
+            distance,
             endLat: latitude,
             endLng: longitude,
           });
@@ -154,7 +167,6 @@ export default function RunnerDashboard({ navigation }) {
 
   const resetState = () => {
     setTrip(null);
-    setDistance('');
     setParking('');
     fetchTPFA(user._id);
   };
@@ -181,6 +193,7 @@ export default function RunnerDashboard({ navigation }) {
               selectedValue={selectedManagerId}
               onValueChange={(val) => setSelectedManagerId(val)}
               style={styles.picker}
+              itemStyle={styles.pickerItem}
             >
               <Picker.Item label="-- Select Manager --" value="" />
               {managers.map((m) => (
@@ -211,21 +224,12 @@ export default function RunnerDashboard({ navigation }) {
           {trip.endTime && <Text>End Time: {new Date(trip.endTime).toLocaleString()}</Text>}
           <Text>Start Location: {trip.startLat?.toFixed(4) || '-'}, {trip.startLng?.toFixed(4) || '-'}</Text>
           <Text>End Location: {trip.endLat?.toFixed(4) || '-'}, {trip.endLng?.toFixed(4) || '-'}</Text>
-          <Text>Distance: {trip.distance || distance} km</Text>
+          <Text>Distance: {trip.distance?.toFixed(2)} km</Text>
           <Text>Parking Charges: ₹{trip.parking || 0}</Text>
           <Text>Total Payment: ₹{trip.payment || 0}</Text>
 
           {!trip.endTime && (
-            <>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter KM Travelled"
-                keyboardType="numeric"
-                value={distance}
-                onChangeText={setDistance}
-              />
-              <Button title="Stop Trip" onPress={stopTrip} color="#ff6600" />
-            </>
+            <Button title="Stop Trip" onPress={stopTrip} color="#ff6600" />
           )}
 
           {trip.endTime && (
@@ -275,7 +279,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     marginBottom: 10,
   },
-  picker: { height: 44, width: '100%' },
+  picker: { height: 48, width: '100%' },
+  pickerItem: { fontSize: 16, height: 48 },
   card: {
     padding: 15,
     backgroundColor: '#fff',

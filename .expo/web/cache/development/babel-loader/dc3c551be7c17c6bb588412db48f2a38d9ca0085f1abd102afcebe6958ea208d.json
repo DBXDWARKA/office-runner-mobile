@@ -1,1 +1,0 @@
-{"ast":null,"code":"export var BASE_URL = 'http://192.168.1.31:3010';","map":{"version":3,"names":["BASE_URL"],"sources":["C:/Projects/office-runner-mobile-fixed/config.js"],"sourcesContent":["export const BASE_URL = 'http://192.168.1.31:3010';\r\n"],"mappings":"AAAA,OAAO,IAAMA,QAAQ,GAAG,0BAA0B","ignoreList":[]},"metadata":{},"sourceType":"module","externalDependencies":[]}

@@ -1,4 +1,4 @@
-rootProject.name = 'office-runner-mobile'
+rootProject.name = 'OfficeRunner'
 
 dependencyResolutionManagement {
   versionCatalogs {

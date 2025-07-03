@@ -1,1 +1,26 @@
-screens/
+# Native folders (ignored for managed workflow)
+android
+ios
+
+# Build outputs
+*.apk
+*.aab
+*.ipa
+dist
+build
+.web-build
+.expo
+
+# System files
+.DS_Store
+node_modules
+
+# Local dev files
+.env
+.env.local
+.env.development
+.env.production
+npm-debug.log
+yarn-error.log
+screenshots/
+coverage/

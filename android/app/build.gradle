@@ -83,9 +83,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.vmathur.officerunnermobile'
+    namespace 'com.dbx.runner'
     defaultConfig {
-        applicationId 'com.vmathur.officerunnermobile'
+        applicationId 'com.dbx.runner'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

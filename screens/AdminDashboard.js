@@ -16,7 +16,7 @@ import axios from 'axios';
 import { BASE_URL } from '../config';
 
 export default function AdminDashboard({ navigation, route }) {
-  const { user } = route.params;
+  const { user } = route.params || {};
 
   const [runnerName, setRunnerName] = useState('');
   const [runnerPhone, setRunnerPhone] = useState('');
