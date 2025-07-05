@@ -1,4 +1,4 @@
-""import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import Geolocation from '@react-native-community/geolocation';
 import { Picker } from '@react-native-picker/picker';
-import { BASE_URL } from '../config';
+import { BASE_URL, GOOGLE_MAPS_API_KEY } from '../config';
 
 export default function RunnerDashboard({ navigation }) {
   const [user, setUser] = useState(null);
@@ -73,18 +73,30 @@ export default function RunnerDashboard({ navigation }) {
     }
   };
 
+  const getAddressFromCoords = async (lat, lng) => {
+    try {
+      const res = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}`);
+      return res.data.results[0]?.formatted_address || `${lat}, ${lng}`;
+    } catch (err) {
+      console.error('Reverse geocoding failed:', err);
+      return `${lat}, ${lng}`;
+    }
+  };
+
   const startTrip = async () => {
     if (!selectedManagerId) return Alert.alert('Please select a manager');
 
     Geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
+        const startAddress = await getAddressFromCoords(latitude, longitude);
         try {
           const res = await axios.post(`${BASE_URL}/api/trip/start`, {
             runnerId: user._id,
             managerId: selectedManagerId,
             startLat: latitude,
             startLng: longitude,
+            startAddress
           });
           setTrip(res.data);
         } catch (err) {
@@ -96,7 +108,7 @@ export default function RunnerDashboard({ navigation }) {
         console.error('Geolocation error (start):', error);
         Alert.alert('Unable to fetch location to start trip');
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
   };
 
@@ -119,12 +131,14 @@ export default function RunnerDashboard({ navigation }) {
     Geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
+        const distance = calculateDistance(trip.startLat, trip.startLng, latitude, longitude);
+        const endAddress = await getAddressFromCoords(latitude, longitude);
         try {
-          const distance = calculateDistance(trip.startLat, trip.startLng, latitude, longitude);
           const res = await axios.post(`${BASE_URL}/api/trip/stop/${trip._id}`, {
             distance,
             endLat: latitude,
             endLng: longitude,
+            endAddress
           });
           setTrip(res.data);
           fetchSummary(user._id);
@@ -137,7 +151,7 @@ export default function RunnerDashboard({ navigation }) {
         console.error('Geolocation error (stop):', error);
         Alert.alert('Unable to fetch location to stop trip');
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
   };
 
@@ -222,8 +236,8 @@ export default function RunnerDashboard({ navigation }) {
           <Text>Trip ID: {trip._id}</Text>
           <Text>Start Time: {new Date(trip.startTime).toLocaleString()}</Text>
           {trip.endTime && <Text>End Time: {new Date(trip.endTime).toLocaleString()}</Text>}
-          <Text>Start Location: {trip.startLat?.toFixed(4) || '-'}, {trip.startLng?.toFixed(4) || '-'}</Text>
-          <Text>End Location: {trip.endLat?.toFixed(4) || '-'}, {trip.endLng?.toFixed(4) || '-'}</Text>
+          <Text>From: {trip.startAddress || `${trip.startLat?.toFixed(4)}, ${trip.startLng?.toFixed(4)}`}</Text>
+          <Text>To: {trip.endAddress || `${trip.endLat?.toFixed(4)}, ${trip.endLng?.toFixed(4)}`}</Text>
           <Text>Distance: {trip.distance?.toFixed(2)} km</Text>
           <Text>Parking Charges: ₹{trip.parking || 0}</Text>
           <Text>Total Payment: ₹{trip.payment || 0}</Text>
