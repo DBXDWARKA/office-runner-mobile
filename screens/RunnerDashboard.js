@@ -13,6 +13,7 @@ import axios from 'axios';
 import Geolocation from '@react-native-community/geolocation';
 import { Picker } from '@react-native-picker/picker';
 import { BASE_URL, GOOGLE_MAPS_API_KEY } from '../config';
+import { PermissionsAndroid, Platform } from 'react-native';
 
 export default function RunnerDashboard({ navigation }) {
   const [user, setUser] = useState(null);
@@ -25,6 +26,11 @@ export default function RunnerDashboard({ navigation }) {
 
   useEffect(() => {
     const load = async () => {
+if (Platform.OS === 'android') {
+      await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+      );
+    }
       const stored = await AsyncStorage.getItem('user');
       if (!stored) return;
       const u = JSON.parse(stored);
@@ -74,14 +80,19 @@ export default function RunnerDashboard({ navigation }) {
   };
 
   const getAddressFromCoords = async (lat, lng) => {
-    try {
-      const res = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}`);
-      return res.data.results[0]?.formatted_address || `${lat}, ${lng}`;
-    } catch (err) {
-      console.error('Reverse geocoding failed:', err);
-      return `${lat}, ${lng}`;
-    }
-  };
+  try {
+    console.log(`📍 Fetching address for lat=${lat}, lng=${lng}`);
+    const res = await axios.get(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}`
+    );
+    console.log('📬 Google Maps API response:', res.data);
+
+    return res.data.results[0]?.formatted_address || `${lat}, ${lng}`;
+  } catch (err) {
+    console.error('❌ Reverse geocoding failed:', err.response?.data || err.message);
+    return `${lat}, ${lng}`; // Fallback to just lat/lng
+  }
+};
 
   const startTrip = async () => {
     if (!selectedManagerId) return Alert.alert('Please select a manager');
